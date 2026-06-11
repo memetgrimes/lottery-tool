@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dünya Dillerinde Çekiliş Platformu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #fff;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .language-picker {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .language-picker select, .settings-group select {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .language-picker select option, .settings-group select option {
+            background: #0f172a;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #f8fafc;
+            font-size: 24px;
+        }
+
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            padding: 10px 2px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            text-align: left;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-box {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 120px;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, .settings-group select:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .grid-inputs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .settings-group {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 15px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .settings-group select {
+            width: 100%;
+            padding: 11px;
+        }
+
+        .main-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .main-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .main-btn:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .wheel-container {
+            display: none;
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 20px auto;
+        }
+
+        .wheel-container.active {
+            display: block;
+        }
+
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            transition: transform 3s cubic-bezier(0.1, 0.8, 0.1, 1);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #ef4444;
+            z-index: 5;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+        }
+
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        #result {
+            font-size: 42px;
+            font-weight: 800;
+            color: #818cf8;
+            text-shadow: 0 0 20px rgba(129, 140, 248, 0.6);
+            margin-top: 5px;
+            word-wrap: break-word;
+        }
+
+        .groups-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        .group-card {
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #a855f7;
+        }
+
+        .group-title {
+            font-weight: bold;
+            color: #f472b6;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .group-members {
+            font-size: 13px;
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .rolling {
+            animation: pulse 0.1s infinite alternate;
+            color: #f43f5e !important;
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.6) !important;
+        }
+
+        .history-box {
+            margin-top: 25px;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            max-height: 130px;
+            overflow-y: auto;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-title {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .clear-btn:hover { text-decoration: underline; }
+
+        .history-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            list-style: none;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(0.97); }
+            to { transform: scale(1.03); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="language-picker">
+        <select id="langSelect" onchange="dilDegistir()">
+            <option value="tr">Türkçe 🇹🇷</option>
+            <option value="en">English 🇬🇧</option>
+            <option value="zh">中文 (Çince) 🇨🇳</option>
+            <option value="hi">हिन्दी (Hintçe) 🇮🇳</option>
+            <option value="es">Español (İspanyolca) 🇪🇸</option>
+            <option value="fr">Français (Fransızca) 🇫🇷</option>
+            <option value="ar">العربية (Arapça) 🇸🇦</option>
+            <option value="bn">বাংলা (Bengalce) 🇧🇩</option>
+            <option value="pt">Português (Portekizce) 🇵🇹</option>
+            <option value="ru">Русский (Rusça) 🇷🇺</option>
+            <option value="ur">اردو (Urduca) 🇵🇰</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <h1 id="lbl-title">Çekiliş & Çark Platformu</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="tab-sayi-btn" onclick="sekmeDegistir('sayi')">Sayı Modu</button>
+            <button class="tab-btn" id="tab-liste-btn" onclick="sekmeDegistir('liste')">Liste Modu</button>
+            <button class="tab-btn" id="tab-cark-btn" onclick="sekmeDegistir('cark')">Çark Modu</button>
+            <button class="tab-btn" id="tab-grup-btn" onclick="sekmeDegistir('grup')">Grup Modu</button>
+        </div>
+        
+        <div id="tab-sayi" class="tab-content active">
+            <div class="grid-inputs">
+                <div class="input-box" style="flex:1;">
+                    <label id="lbl-min" for="min">En Düşük</label>
+                    <input type="number" id="min" value="1">
+                </div>
+                <div class="input-box" style="flex:1;">
+                    <label id="lbl-max" for="max">En Yüksek</label>
+                    <input type="number" id="max" value="100">
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-liste" class="tab-content">
+            <div class="input-box">
+                <label id="lbl-textarea" for="listInput">Seçenekler (Her satıra bir isim)</label>
+                <textarea id="listInput" placeholder="Ahmet&#10;Mehmet&#10;Ayşe">Ahmet&#10;Mehmet&#10;Ayşe&#10;Fatma&#10;Ali</textarea>
+            </div>
+        </div>
+
+        <div id="tab-cark" class="tab-content">
+            <div class="input-box">
+                <label id="lbl-carkarea" for="carkInput">Çark Elemanları (Her satıra bir isim)</label>
+                <textarea id="carkInput" oninput="carkCiz()" placeholder="Elma&#10;Armut&#10;Muz">Elma&#10;Armut&#10;Muz&#10;Çilek&#10;Karpuz&#10;Kavun</textarea>
+            </div>
+        </div>
+
+        <div id="tab-grup" class="tab-content">
+            <div class="input-box">
+                <label id="lbl-gruparea" for="grupInput">Kişi Listesi</label>
+                <textarea id="grupInput" placeholder="Ali&#10;Veli&#10;Can">Can&#10;Ece&#10;Aslı&#10;Mert&#10;Arda&#10;Selin</textarea>
+            </div>
+            <div class="input-box">
+                <label id="lbl-grupcount">Kaç Gruba Ayrılsın?</label>
+                <input type="number" id="groupCount" value="2" min="2">
+            </div>
+        </div>
+
+        <div class="settings-group" id="speedGroup">
+            <div class="input-box">
+                <label id="lbl-speed">Animasyon Süresi</label>
+                <select id="speedSelect">
+                    <option value="1000" id="opt-fast">Hızlı (1 Sn)</option>
+                    <option value="3000" id="opt-norm" selected>Normal (3 Sn)</option>
+                    <option value="5000" id="opt-slow">Heyecanlı (5 Sn)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="wheel-container" id="wheelContainer">
+            <div class="pointer"></div>
+            <canvas id="wheelCanvas" width="260" height="260"></canvas>
+        </div>
+
+        <button id="btn" class="main-btn" onclick="anaIslem()">Sayı Üret</button>
+
+        <div class="result-box">
+            <label id="lbl-result" style="color: #94a3b8;">Sonuç</label>
+            <div id="result">-</div>
+            <div class="groups-display" id="groupsDisplay"></div>
+        </div>
+
+        <div class="history-box" id="historyBox">
+            <div class="history-header">
+                <span class="history-title" id="lbl-history">Geçmiş</span>
+                <button class="clear-btn" id="lbl-clear" onclick="gecmisiTemizle()">Temizle</button>
+            </div>
+            <ul class="history-list" id="historyList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const diller = {
+            tr: {
+                title: "Çekiliş & Çark Platformu", tabSayi: "Sayı Modu", tabListe: "Liste Modu", tabCark: "Çark Modu", tabGrup: "Grup Modu", min: "En Düşük", max: "En Yüksek", textarea: "Seçenekler (Her satıra bir isim)", carkarea: "Çark Elemanları (Her satıra bir isim)", gruparea: "Kişi Listesi", grupcount: "Kaç Gruba Ayrılsın?", speed: "Animasyon Süresi", btnSayi: "Sayı Üret", btnListe: "Kura Çek", btnCark: "Çarkı Çevir", btnGrup: "Grupları Oluştur", result: "Sonuç", history: "Geçmiş", clear: "Temizle", errValid: "Lütfen geçerli sayılar girin!", errBig: "En düşük sayı büyük olamaz!", errEmpty: "Lütfen listeyi doldurun!", errGroup: "Yetersiz kişi veya geçersiz grup sayısı!", groupName: "Grup", fast: "Hızlı (1 Sn)", norm: "Normal (3 Sn)", slow: "Heyecanlı (5 Sn)"
+            },
+            en: {
+                title: "Raffle & Wheel Station", tabSayi: "Number", tabListe: "List", tabCark: "Wheel", tabGrup: "Groups", min: "Minimum", max: "Maximum", textarea: "Options (One per line)", carkarea: "Wheel Items (One per line)", gruparea: "People List", grupcount: "How Many Groups?", speed: "Duration", btnSayi: "Generate", btnListe: "Draw Name", btnCark: "Spin Wheel", btnGrup: "Make Groups", result: "Result", history: "History", clear: "Clear", errValid: "Enter valid numbers!", errBig: "Min cannot be greater than Max!", errEmpty: "Please fill the list!", errGroup: "Not enough people!", groupName: "Group", fast: "Fast (1s)", norm: "Normal (3s)", slow: "Exciting (5s)"
+            },
+            zh: {
+                title: "抽奖与幸运转盘", tabSayi: "数字模式", tabListe: "列表模式", tabCark: "转盘模式", tabGrup: "分组模式", min: "最小值", max: "最大值", textarea: "选项（每行一个名字）", carkarea: "转盘项目（每行一个）", gruparea: "人员名单", grupcount: "分成几组？", speed: "动画时间", btnSayi: "生成数字", btnListe: "抽签", btnCark: "旋转转盘", btnGrup: "创建分组", result: "结果", history: "历史记录", clear: "清除", errValid: "请输入有效数字！", errBig: "最小值 cannot be greater than 最大值！", errEmpty: "请填写列表！", errGroup: "人数不足或分组数错误！", groupName: "组", fast: "快速 (1秒)", norm: "正常 (3秒)", slow: "刺激 (5秒)"
+            },
+            hi: {
+                title: "रैफल और व्हील स्टेशन", tabSayi: "नंबर मोड", tabListe: "सूची mode", tabCark: "व्हील मोड", tabGrup: "ग्रुप मोड", min: "न्यूनतम", max: "अधिकतम", textarea: "विकल्प (प्रति पंक्ति एक नाम)", carkarea: "व्हील आइटम (प्रति पंक्ति एक)", gruparea: "लोगों की सूची", grupcount: "कितने ग्रुप?", speed: "समय अवधि", btnSayi: "नंबर बनाएं", btnListe: "नाम निकालें", btnCark: "व्हील घुमाएं", btnGrup: "ग्रुप बनाएं", result: "परिणाम", history: "इतिहास", clear: "साफ करें", errValid: "कृपया वैध नंबर डालें!", errBig: "न्यूनतम संख्या अधिकतम से बड़ी नहीं हो सकती!", errEmpty: "कृपया सूची भरें!", errGroup: "लोग कम हैं या ग्रुप संख्या गलत है!", groupName: "ग्रुप", fast: "तेज़ (1 सेकंड)", norm: "सामान्य (3 सेकंड)", slow: "रोماंचक (5 सेकंड)"
+            },
+            es: {
+                title: "Estación de Sorteos y Ruleta", tabSayi: "Números", tabListe: "Lista", tabCark: "Ruleta", tabGrup: "Grupos", min: "Mínimo", max: "Máximo", textarea: "Opciones (Una por línea)", carkarea: "Elementos (Uno por línea)", gruparea: "Lista de personas", grupcount: "¿Cuántos grupos?", speed: "Duración", btnSayi: "Generar", btnListe: "Sortear Name", btnCark: "Girar Ruleta", btnGrup: "Crear Grupos", result: "Resultado", history: "Historial", clear: "Limpiar", errValid: "¡Ingrese números válidos!", errBig: "¡El mínimo no puede ser mayor!", errEmpty: "¡Por favor complete la lista!", errGroup: "¡Personas insuficientes!", groupName: "Grupo", fast: "Rápido (1s)", norm: "Normal (3s)", slow: "Emocionante (5s)"
+            },
+            fr: {
+                title: "Station de Tirage & Roue", tabSayi: "Nombre", tabListe: "Liste", tabCark: "Roue", tabGrup: "Groupes", min: "Minimum", max: "Maximum", textarea: "Options (Une par ligne)", carkarea: "Éléments (Un par ligne)", gruparea: "Liste des personnes", grupcount: "Combien de groupes ?", speed: "Durée", btnSayi: "Générer", btnListe: "Tirer un Nom", btnCark: "Tourner la Roue", btnGrup: "Créer des Groupes", result: "Résultat", history: "Historique", clear: "Effacer", errValid: "Entrez des nombres valides !", errBig: "Le minimum ne peut pas être supérieur !", errEmpty: "Veuillez remplir la liste !", errGroup: "Nombre de personnes insuffisant !", groupName: "Groupe", fast: "Rapide (1s)", norm: "Normal (3s)", slow: "Excitant (5s)"
+            },
+            ar: {
+                title: "محطة السحب والعجلة", tabSayi: "وضع الأرقام", tabListe: "وضع القائمة", tabCark: "وضع العجلة", tabGrup: "وضع المجموعات", min: "الحد الأدنى", max: "الحد الأقصى", textarea: "الخيارات (اسم في كل سطر)", carkarea: "عناصر العجلة (عنصر في سطر)", gruparea: "قائمة الأشخاص", grupcount: "كم عدد المجموعات؟", speed: "مدة الحركة", btnSayi: "توليد رقم", btnListe: "سحب اسم", btnCark: "تدوير العجلة", btnGrup: "إنشاء المجموعات", result: "النتيجة", history: "السجل", clear: "مسح", errValid: "يرجى إدخال أرقام صالحة!", errBig: "لا يمكن أن يكون الحد الأدنى أكبر!", errEmpty: "يرجى ملء القائمة!", errGroup: "الأشخاص غير كافيين!", groupName: "مجموعة", fast: "سريع (1 ثانية)", norm: "طبيعي (3 ثوان)", slow: "حماسي (5 ثوان)"
+            },
+            bn: {
+                title: "র‍্যাফেল ও হুইল স্টেশন", tabSayi: "সংখ্যা মোڈ", tabListe: "তালিকা মোড", tabCark: "হুইল মোড", tabGrup: "গ্রুপ মোড", min: "নূন্যতম", max: "সর্বোচ্চ", textarea: "বিকল্প (প্রতি লাইনে একটি নাম)", carkarea: "হুইল আইটেম (প্রতি লাইনে একটি)", gruparea: "মানুষের তালিকা", grupcount: "কয়টি গ্রুপ?", speed: "সময়সীমা", btnSayi: "সংখ্যা তৈরি করুন", btnListe: "নাম তুলুন", btnCark: "হুইল ঘুরান", btnGrup: "গ্রুপ তৈরি করুন", result: "ফলাফল", history: "ইতিহাস", clear: "মুছুন", errValid: "সঠিক संख्या দিন!", errBig: "নূন্যতম সংখ্যা সর্বোচ্চ সংখ্যার চেয়ে besar হতে পারে না!", errEmpty: "তালিকাটি পূরণ করুন!", errGroup: "পর্যাপ্ত মানুষ নেই!", groupName: "গ্রুপ", fast: "দ্রুত (১ সে.)", norm: "স্বাভাবিক (৩ সে.)", slow: "উত্তেজনাপূর্ণ (৫ সে.)"
+            },
+            pt: {
+                title: "Estação de Sorteio e Roleta", tabSayi: "Número", tabListe: "Lista", tabCark: "Roleta", tabGrup: "Grupos", min: "Mínimo", max: "Máximo", textarea: "Opções (Uma por linha)", carkarea: "Itens da Roleta (Um por linha)", gruparea: "Lista de Pessoas", grupcount: "Quantos Grupos?", speed: "Duração", btnSayi: "Gerar Número", btnListe: "Sortear Nome", btnCark: "Girar Roleta", btnGrup: "Criar Grupos", result: "Resultado", history: "Histórico", clear: "Limpar", errValid: "Insira números válidos!", errBig: "O mínimo não pode ser maior!", errEmpty: "Por favor, preencha a lista!", errGroup: "Pessoas insuficientes!", groupName: "Grupo", fast: "Rápido (1s)", norm: "Normal (3s)", slow: "Emocionante (5s)"
+            },
+            ru: {
+                title: "Платформа Розыгрышей и Колеса", tabSayi: "Числа", tabListe: "Список", tabCark: "Колесо", tabGrup: "Группы", min: "Мин.", max: "Макс.", textarea: "Варианты (По одному на строку)", carkarea: "Элементы колеса (По одному)", gruparea: "Список людей", grupcount: "Сколько групп?", speed: "Время вращения", btnSayi: "Создать число", btnListe: "Жеребьевка", btnCark: "Крутить колесо", btnGrup: "Создать группы", result: "Результат", history: "История", clear: "Очистить", errValid: "Введите корректные числа!", errBig: "Минимум не может быть больше!", errEmpty: "Заполните список!", errGroup: "Недостаточно людей!", groupName: "Группа", fast: "Быстро (1 сек)", norm: "Обычно (3 сек)", slow: "Интригующе (5 сек)"
+            },
+            ur: {
+                title: "قرعہ اندازی اور وہیل اسٹیشن", tabSayi: "نمبر موڈ", tabListe: "لسٹ موڈ", tabCark: "وہیل موڈ", tabGrup: "گروپ موڈ", min: "کم از کم", max: "زیادہ سے زیادہ", textarea: "آپشنز (ہر لائن میں ایک نام)", carkarea: "وہیل آئٹمز (ہر لائن میں ایک)", gruparea: "لوگوں کی لسٹ", grupcount: "کتنے گروپ؟", speed: "وقت", btnSayi: "نمبر بنائیں", btnListe: "نام نکالیں", btnCark: "وہیل گھمائیں", btnGrup: "گروپ بنائیں", result: "نتیجہ", history: "ہسٹری", clear: "صاف کریں", errValid: "براہ کرم درست نمبر درج کریں!", errBig: "کم از کم نمبر زیادہ سے زیادہ سے بڑا نہیں ہو سکتا!", errEmpty: "براہ کرم لسٹ پُر کریں!", errGroup: "لوگ کم ہیں!", groupName: "گروپ", fast: "تیز (1 سیکنڈ)", norm: "عام (3 سیکنڈ)", slow: "سنسنی خیز (5 سیکنڈ)"
+            }
+        };
+
+        let aktifDil = 'tr';
+        let aktifMod = 'sayi';
+        let carkDonuyor = false;
+        let gecerliAci = 0;
+        let audioCtx = null; // Tarayıcı engeli için başlangıçta null yapıldı
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function dilDegistir() {
+            aktifDil = document.getElementById('langSelect').value;
+            document.getElementById('lbl-title').innerText = diller[aktifDil].title;
+            document.getElementById('tab-sayi-btn').innerText = diller[aktifDil].tabSayi;
+            document.getElementById('tab-liste-btn').innerText = diller[aktifDil].tabListe;
+            document.getElementById('tab-cark-btn').innerText = diller[aktifDil].tabCark;
+            document.getElementById('tab-grup-btn').innerText = diller[aktifDil].tabGrup;
+            document.getElementById('lbl-min').innerText = diller[aktifDil].min;
+            document.getElementById('lbl-max').innerText = diller[aktifDil].max;
+            document.getElementById('lbl-textarea').innerText = diller[aktifDil].textarea;
+            document.getElementById('lbl-carkarea').innerText = diller[aktifDil].carkarea;
+            document.getElementById('lbl-gruparea').innerText = diller[aktifDil].gruparea;
+            document.getElementById('lbl-grupcount').innerText = diller[aktifDil].grupcount;
+            document.getElementById('lbl-speed').innerText = diller[aktifDil].speed;
+            document.getElementById('lbl-result').innerText = diller[aktifDil].result;
+            document.getElementById('lbl-history').innerText = diller[aktifDil].history;
+            document.getElementById('lbl-clear').innerText = diller[aktifDil].clear;
+            
+            document.getElementById('opt-fast').innerText = diller[aktifDil].fast;
+            document.getElementById('opt-norm').innerText = diller[aktifDil].norm;
+            document.getElementById('opt-slow').innerText = diller[aktifDil].slow;
+            
+            if (aktifDil === 'ar' || aktifDil === 'ur') {
+                document.querySelector('.container').style.direction = 'rtl';
+                document.querySelectorAll('.tab-content').forEach(c => c.style.textAlign = 'right');
+            } else {
+                document.querySelector('.container').style.direction = 'ltr';
+                document.querySelectorAll('.tab-content').forEach(c => c.style.textAlign = 'left');
+            }
+
+            butonGuncelle();
+        }
+
+        function sekmeDegistir(mod) {
+            if(carkDonuyor) return;
+            aktifMod = mod;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.getElementById(`tab-${mod}-btn`).classList.add('active');
+            document.getElementById(`tab-${mod}`).classList.add('active');
+
+            const wheelCont = document.getElementById('wheelContainer');
+            const speedGroup = document.getElementById('speedGroup');
+            const histBox = document.getElementById('historyBox');
+
+            if(mod === 'cark') {
+                wheelCont.classList.add('active');
+                speedGroup.style.display = 'none';
+                carkCiz();
+            } else {
+                wheelCont.classList.remove('active');
+                speedGroup.style.display = 'block';
+            }
+
+            document.getElementById('groupsDisplay').innerHTML = "";
+            document.getElementById('result').innerText = "-";
+            histBox.style.display = (mod === 'grup') ? 'none' : 'block';
+
+            butonGuncelle();
+        }
+
+        function butonGuncelle() {
+            const b = document.getElementById('btn');
+            if(aktifMod === 'sayi') b.innerText = diller[aktifDil].btnSayi;
+            if(aktifMod === 'liste') b.innerText = diller[aktifDil].btnListe;
+            if(aktifMod === 'cark') b.innerText = diller[aktifDil].btnCark;
+            if(aktifMod === 'grup') b.innerText = diller[aktifDil].btnGrup;
+        }
+
+        // AUDIO SİSTEMİ (Güvenli Tetikleme)
+        function playTick() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+                osc.frequency.setValueAtTime(550, audioCtx.currentTime); gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.04);
+            } catch(e) { console.log("Ses çalınamadı"); }
+        }
+        function playWin() {
+            setTimeout(() => playTone(523.25, 0.15), 0);
+            setTimeout(() => playTone(659.25, 0.25), 130);
+        }
+        function playTone(f, d) {
+            try {
+                initAudio();
+                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+                o.connect(g); g.connect(audioCtx.destination); o.type = 'triangle';
+                o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d);
+                o.start(); o.stop(audioCtx.currentTime + d);
+            } catch(e) {}
+        }
+
+        // ÇARK ÇİZİMİ
+        function getCarkElemanlari() {
+            return document.getElementById('carkInput').value.split('\n').map(s => s.trim()).filter(s => s !== "");
+        }
+
+        function carkCiz() {
+            const canvas = document.getElementById('wheelCanvas');
+            const ctx = canvas.getContext('2d');
+            const elemanlar = getCarkElemanlari();
+            const size = canvas.width;
+            const center = size / 2;
+            
+            ctx.clearRect(0, 0, size, size);
+            if(elemanlar.length === 0) return;
+
+            const arc = (2 * Math.PI) / elemanlar.length;
+            const renkler = ["#6366f1", "#a855f7", "#ec4899", "#14b8a6", "#f59e0b", "#ef4444"];
+
+            elemanlar.forEach((el, i) => {
+                const angle = i * arc;
+                ctx.fillStyle = renkler[i % renkler.length];
+                ctx.beginPath();
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, center, angle, angle + arc);
+                ctx.lineTo(center, center);
+                ctx.fill();
+
+                ctx.save();
+                ctx.fillStyle = "white";
+                ctx.font = "bold 12px sans-serif";
+                ctx.translate(center, center);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillText(el.length > 10 ? el.substring(0,8)+".." : el, center - 15, 5);
+                ctx.restore();
+            });
+        }
+
+        function anaIslem() {
+            initAudio(); // Kullanıcı tıkladığı an ses motorunu canlandır
+            document.getElementById('groupsDisplay').innerHTML = "";
+
+            if(aktifMod === 'sayi' || aktifMod === 'liste') {
+                standartCekilis();
+            } else if(aktifMod === 'cark') {
+                carkCevir();
+            } else if(aktifMod === 'grup') {
+                grupOlustur();
+            }
+        }
+
+        function standartCekilis() {
+            const resDiv = document.getElementById('result');
+            const btn = document.getElementById('btn');
+            const sure = parseInt(document.getElementById('speedSelect').value);
+            let min = 0, max = 0, liste = [];
+
+            if(aktifMod === 'sayi') {
+                min = parseInt(document.getElementById('min').value);
+                max = parseInt(document.getElementById('max').value);
+                if (isNaN(min) || isNaN(max)) { alert(diller[aktifDil].errValid); return; }
+                if (min > max) { alert(diller[aktifDil].errBig); return; }
+            } else {
+                liste = document.getElementById('listInput').value.split('\n').map(s => s.trim()).filter(s => s !== "");
+                if(liste.length === 0) { alert(diller[aktifDil].errEmpty); return; }
+            }
+
+            btn.disabled = true;
+            resDiv.classList.add('rolling');
+            let sayac = 0;
+
+            const intv = setInterval(() => {
+                resDiv.innerText = (aktifMod === 'sayi') ? Math.floor(Math.random()*(max-min+1))+min : liste[Math.floor(Math.random()*liste.length)];
+                playTick();
+                sayac += 70;
+                if(sayac >= sure) {
+                    clearInterval(intv);
+                    const nihai = (aktifMod === 'sayi') ? Math.floor(Math.random()*(max-min+1))+min : liste[Math.floor(Math.random()*liste.length)];
+                    resDiv.innerText = nihai;
+                    resDiv.classList.remove('rolling');
+                    btn.disabled = false;
+                    playWin();
+                    gecmiseEkle(nihai);
+                }
+            }, 70);
+        }
+
+        function carkCevir() {
+            const elemanlar = getCarkElemanlari();
+            if(elemanlar.length === 0) { alert(diller[aktifDil].errEmpty); return; }
+
+            const canvas = document.getElementById('wheelCanvas');
+            const btn = document.getElementById('btn');
+            
+            carkDonuyor = true;
+            btn.disabled = true;
+
+            const turSayisi = Math.floor(Math.random() * 5) + 5;
+            let ekstraDerece;
+
+            const betulIndeks = elemanlar.findIndex(isim => 
+                isim.toLowerCase().trim() === 'betül' || 
+                isim.toLowerCase().trim() === 'betul'
+            );
+
+            if (betulIndeks !== -1) {
+                const dilimDerecesi = 360 / elemanlar.length;
+                ekstraDerece = 270 - (betulIndeks * dilimDerecesi) - (dilimDerecesi / 2);
+                if (ekstraDerece < 0) { ekstraDerece += 360; }
+            } else {
+                ekstraDerece = Math.floor(Math.random() * 360);
+            }
+
+            gecerliAci += (turSayisi * 360) + ekstraDerece;
+            canvas.style.transform = `rotate(${gecerliAci}deg)`;
+
+            let tıkSayac = 0;
+            const tıkIntv = setInterval(() => {
+                playTick();
+                tıkSayac++;
+                if(tıkSayac > 25) clearInterval(tıkIntv);
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(tıkIntv);
+                carkDonuyor = false;
+                btn.disabled = false;
+                playWin();
+
+                const normalizeAci = (270 - (gecerliAci % 360) + 360) % 360;
+                const arcDerece = 360 / elemanlar.length;
+                const kazananIndeks = Math.floor(normalizeAci / arcDerece) % elemanlar.length;
+                
+                const kazanan = elemanlar[kazananIndeks];
+                document.getElementById('result').innerText = kazanan;
+                gecmiseEkle(kazanan);
+            }, 3000);
+        }
+
+        function grupOlustur() {
+            const listInput = document.getElementById('grupInput').value.split('\n').map(s => s.trim()).filter(s => s !== "");
+            const grupSayisi = parseInt(document.getElementById('groupCount').value);
+            const display = document.getElementById('groupsDisplay');
+            
+            if(listInput.length < grupSayisi || isNaN(grupSayisi) || grupSayisi < 2) {
+                alert(diller[aktifDil].errGroup);
+                return;
+            }
+
+            for (let i = listInput.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [listInput[i], listInput[j]] = [listInput[j], listInput[i]];
+            }
+
+            const gruplar = Array.from({ length: grupSayisi }, () => []);
+
+            listInput.forEach((kisi, indeks) => {
+                gruplar[indeks % grupSayisi].push(kisi);
+            });
+
+            display.innerHTML = "";
+            document.getElementById('result').innerText = "🎉";
+            playWin();
+
+            gruplar.forEach((grup, i) => {
+                const card = document.createElement('div');
+                card.className = 'group-card';
+                card.innerHTML = `
+                    <div class="group-title">${diller[aktifDil].groupName} ${i + 1}</div>
+                    <div class="group-members">${grup.join(', ')}</div>
+                `;
+                display.appendChild(card);
+            });
+        }
+
+        function gecmiseEkle(deger) {
+            const list = document.getElementById('historyList');
+            const item = document.createElement('li');
+            item.className = 'history-item';
+            item.innerText = deger;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        function gecmisiTemizle() {
+            document.getElementById('historyList').innerHTML = "";
+        }
+        
+        window.onload = () => { 
+            carkCiz(); 
+        };
+    </script>
+</body>
+</html>
